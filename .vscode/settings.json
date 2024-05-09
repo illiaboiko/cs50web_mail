@@ -1,3 +1,8 @@
 {
-    "files.autoSave": "afterDelay"
+    "files.autoSave": "afterDelay",
+
+    "vim.handleKeys": {
+        "<C-p>": false,
+        "<C-b>": false,
+    },
 }

@@ -31,13 +31,132 @@ function load_mailbox(mailbox) {
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#single-email-view').style.display = 'none';
+
+  // get mailbox view parent div
+  const mailContainer = document.querySelector('#emails-view');
   
   // Show the mailbox name
-  document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+  mailContainer.innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+
+      
+      // get the data from API
+      
+      fetch(`emails/${mailbox}`)
+      .then((response) => {
+        // check response from the API
+        if(!response.ok) {
+          return response.json().then((errorData) => {
+          throw new Error(errorData.error);
+        });
+      } else {
+        console.log(response.status)
+        return response.json();
+      }
+    })
+    .then(data => {
+      // create table element and make header
+      document.querySelector('#emails-view').insertAdjacentHTML('beforeend', `
+        <table id="inboxTable" class="table table-bordered table-hover">
+              <thead>
+                  <tr>
+                      <th scope="col">From</th>
+                      <th scope="col">Subject</th>
+                      <th scope="col">Received</th>
+                  </tr>
+              </thead>
+              <tbody>
+              </tbody>
+          </table>
+      `)
+      const tableBody = document.querySelector('#inboxTable tbody');
+      
+      // loop through every email and render table rows and cells
+      data.forEach(email => {
+        // create table row
+        const tableRow = document.createElement('tr');
+        //create row cells, populate with data and append to a row
+        const tableCellFrom = document.createElement('td');
+        tableCellFrom.innerHTML = email.sender;
+        
+        const tableCellSubject = document.createElement('td');
+        tableCellSubject.innerHTML = email.subject;
+        
+        const tableCellTimestamp = document.createElement('td');
+        tableCellTimestamp.innerHTML = email.timestamp;
+        
+        tableRow.append(tableCellFrom, tableCellSubject, tableCellTimestamp)
+        // add click eventLIstener to be able to show particular email
+        const id = email.id
+        tableRow.addEventListener('click', () => show_email(id));
+
+        // check whether email is read and change background
+        if (email.read) {
+          tableRow.classList.add('table-secondary');
+        } else {
+          tableRow.classList.remove('table-secondary');
+        }
+
+        // append the row to a tableBody
+        tableBody.appendChild(tableRow)
+     
+      });
+    })
+    
+
 };
 
-function send_email (event) {
+function show_email(id) {
+  // hide email and compose view
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#single-email-view').style.display = 'block';
 
+  // set single-email-view container
+  const emailContainer = document.querySelector('#single-email-view')
+
+  // make GET request to fetch the date from email API
+  fetch(`/emails/${id}`)
+  .then((response) => {
+    if(!response.ok) {
+      return response.json().then((errorData) => {
+        throw new Error(errorData.error)
+      });
+    } else {
+      console.log(response.status);
+      return response.json();
+    }
+    })
+  .then((email) => {
+    // clear email view
+    emailContainer.innerHTML = '';
+
+    // render the email view
+    const infoDiv = document.createElement('div');
+    infoDiv.insertAdjacentHTML('beforeend', `
+      <p class="mb-1"><span class="font-weight-bolder">From: </span>${email.sender}</p>
+      <p class="mb-1"><span class="font-weight-bolder">To: </span>${email.recipients.toString()}</p>
+      <p class="mb-1"><span class="font-weight-bolder">Subject: </span>${email.subject}</p>
+      <p class="mb-1"><span class="font-weight-bolder">Timestamp: </span>${email.timestamp}</p>
+      <br>
+    `);
+
+    const bodyDiv = document.createElement('div');
+    bodyDiv.insertAdjacentHTML('beforeend', `
+      <p>${email.body}</p>
+    `);
+
+    emailContainer.append(infoDiv, bodyDiv);
+  })
+  .catch(error => {
+    console.log('error', error.message)
+  });
+ 
+}
+
+
+function send_email (event) {
+  
   // get form data:
   const recipientsData = document.querySelector('#compose-recipients').value.toLowerCase();
   const subjectData = document.querySelector('#compose-subject').value;
@@ -55,12 +174,12 @@ function send_email (event) {
   })
   .then((response) => {
     // check response from the API
-    if(response.ok) {
-      return response.json();
-    } else {
+    if(!response.ok) {
       return response.json().then((errorData) => {
         throw new Error(errorData.error)
       });
+    } else {
+      return response.json();
     }
   })
   .then(result => {
@@ -77,3 +196,7 @@ function send_email (event) {
   event.preventDefault();
 
 };
+
+data[0] = "foo";
+data[14] = "bar";
+data[15] = "baz";
