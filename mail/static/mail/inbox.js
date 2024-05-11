@@ -32,6 +32,9 @@ function load_mailbox(mailbox) {
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
   document.querySelector('#single-email-view').style.display = 'none';
+  
+  // set initial state of the app
+  history.replaceState({mailbox: mailbox, email_id: null}, "", "/")
 
   // get mailbox view parent div
   const mailContainer = document.querySelector('#emails-view');
@@ -115,10 +118,12 @@ function show_email(id) {
   // set single-email-view container
   const emailContainer = document.querySelector('#single-email-view')
 
+
   // make GET request to fetch the date from email API
   fetch(`/emails/${id}`)
   .then((response) => {
     if(!response.ok) {
+      emailContainer.text = "Couldn't not load the email :(";
       return response.json().then((errorData) => {
         throw new Error(errorData.error)
       });
@@ -147,6 +152,10 @@ function show_email(id) {
     `);
 
     emailContainer.append(infoDiv, bodyDiv);
+
+
+    // Add the current state to the history
+    history.pushState({email_id: id}, "", `emails/${id}`);
   })
   .catch(error => {
     console.log('error', error.message)
@@ -197,6 +206,11 @@ function send_email (event) {
 
 };
 
-data[0] = "foo";
-data[14] = "bar";
-data[15] = "baz";
+// When back arrow is clicked, show previous section
+window.addEventListener ("popstate", function(event) {
+  if(event.state["mailbox"]) {
+    load_mailbox(event.state.mailbox);
+  } else {
+    show_email(event.state.email_id);
+  }
+});
