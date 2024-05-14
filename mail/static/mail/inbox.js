@@ -6,24 +6,43 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
   document.querySelector('#compose').addEventListener('click', compose_email);
 
-
   // add event listener to the Send Email button
   document.querySelector('#compose-form').addEventListener('submit', send_email);
 
+  
   // By default, load the inbox
   load_mailbox('inbox');
 });
 
-function compose_email() {
-
+function compose_email(reply_email) {
+  
   // Show compose view and hide other views
-  document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#single-email-view').style.display = 'none';
+  
+  
+  // set input elements
+  const recipientsInput = document.querySelector('#compose-recipients');
+  const subjectInput = document.querySelector('#compose-subject');
+  const bodyInput = document.querySelector('#compose-body');
+  
+  // pre-fill the elements if it's a reply action
+  if(reply_email) {
+    recipientsInput.value = reply_email.sender;
+    subjectInput.value = reply_email.subject.startsWith("Re:") ? reply_email.subject : `Re: ${reply_email.subject}`;
+    bodyInput.value = `
+    
+    on ${reply_email.timestamp} wrote:
+    ${reply_email.body}
+    ` 
+  } else {
+    recipientsInput.value = '';
+    subjectInput.value = '';
+    bodyInput.value = '';
+  }
 
-  // Clear out composition fields
-  document.querySelector('#compose-recipients').value = '';
-  document.querySelector('#compose-subject').value = '';
-  document.querySelector('#compose-body').value = '';
 };
 
 function load_mailbox(mailbox) {
@@ -168,16 +187,20 @@ function show_email(id) {
       <p class="mb-1"><span class="font-weight-bolder">To: </span>${email.recipients.toString()}</p>
       <p class="mb-1"><span class="font-weight-bolder">Subject: </span>${email.subject}</p>
       <p class="mb-1"><span class="font-weight-bolder">Timestamp: </span>${email.timestamp}</p>
+      <button id="reply" class="btn btn-primary">Reply</button>
       <br>
-    `);
-
+      `);
+      
+      
       const bodyDiv = document.createElement('div');
       bodyDiv.insertAdjacentHTML('beforeend', `
       <p>${email.body}</p>
-    `);
-
+      `);
+      
       emailContainer.append(infoDiv, bodyDiv);
-
+      
+      // add reply functionality to the button
+      document.querySelector('#reply').addEventListener('click', () => compose_email(email));
 
       // Add the current state to the history
       history.pushState({ email_id: id }, "", `emails/${id}`);
@@ -203,8 +226,8 @@ function show_email(id) {
       console.log('error', error.message)
     });
 
+  // add event listener to the reply button
   // show single emeail view
-
   document.querySelector('#single-email-view').style.display = 'block';
 }
 
@@ -284,4 +307,4 @@ function archive(event, id, archived) {
   .catch(error => {
     console.log('error', error.message)
   });
-}
+} 
