@@ -194,7 +194,7 @@ function show_email(id) {
       
       const bodyDiv = document.createElement('div');
       bodyDiv.insertAdjacentHTML('beforeend', `
-      <p>${email.body}</p>
+      ${email.body}
       `);
       
       emailContainer.append(infoDiv, bodyDiv);
