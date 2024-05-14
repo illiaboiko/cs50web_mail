@@ -34,7 +34,7 @@ function compose_email(reply_email) {
     subjectInput.value = reply_email.subject.startsWith("Re:") ? reply_email.subject : `Re: ${reply_email.subject}`;
     bodyInput.value = `
     
-    on ${reply_email.timestamp} wrote:
+    on ${reply_email.timestamp} ${reply_email.sender} wrote:
     ${reply_email.body}
     ` 
   } else {
